@@ -370,8 +370,19 @@ class Score:
 class Combo:
     """
     コンボに関するクラス
+    連続撃墜やコイン取得で１加算
     """
-    pass
+    def __init__(self):
+        self.font = pg.font.Font(None, 50)
+        self.color = (255, 215, 0)
+        self.value = 0
+        self.image = self.font.render(f"{self.value}combo", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 100, HEIGHT-100
+
+    def update(self, screen: pg.Surface):
+        self.image = self.font.render(f"{self.value}combo", 0, self.color)
+        screen.blit(self.image, self.rect)
 
 
 """ 以下、main関数 """
@@ -381,6 +392,7 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
+    combo = Combo()  # コンボオブジェクト
 
     bird = Bird(3, (900, 400))
     gravity_group = pg.sprite.Group()  # gravityのGruopオブジェクトの生成
@@ -479,6 +491,7 @@ def main():
         shield.update()
         shield.draw(screen)
         score.update(screen)
+        combo.update(screen)
         emp.update()
         emp.draw(screen)
         pg.display.update()
