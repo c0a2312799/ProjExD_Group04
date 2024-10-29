@@ -379,7 +379,20 @@ class Combo:
 def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
-    bg_img = pg.image.load(f"fig/pg_bg.jpg")
+    #背景画像のロード　　　　　　　　　　　　　　　　　　彩乃が書いた
+    bg_img1 = pg.image.load(f"fig/背景画像/bg1.jpg")
+    bg_img2 = pg.image.load(f"fig/背景画像/bg2.jpg")
+    bg_img3 = pg.image.load(f"fig/背景画像/bg3.jpg")
+    bg_img4 = pg.image.load(f"fig/背景画像/bg4.jpg")
+    bg_img5 = pg.image.load(f"fig/背景画像/bg5.jpg")
+    #背景画像の大きさの変更
+    bg_img1 = pg.transform.scale(bg_img1, (WIDTH, HEIGHT))
+    bg_img2 = pg.transform.scale(bg_img2, (WIDTH, HEIGHT))
+    bg_img3 = pg.transform.scale(bg_img3, (WIDTH, HEIGHT))
+    bg_img4 = pg.transform.scale(bg_img4, (WIDTH, HEIGHT))
+    bg_img5 = pg.transform.scale(bg_img5, (WIDTH, HEIGHT))
+    bg_img_list = [bg_img1, bg_img2, bg_img3, bg_img4, bg_img5]  # 背景画像のリストの作成
+    bg_image = random.choice(bg_img_list)  # 背景画像をランダムで選ぶ
     score = Score()
 
     bird = Bird(3, (900, 400))
@@ -426,7 +439,7 @@ def main():
                     score.value -= 50
                     shield.add((Shield(bird, 400)))
 
-        screen.blit(bg_img, [0, 0])
+        screen.blit(bg_image, [0, 0])  # 背景画像の描画　　　　　　　　　　　　　　　　　　　　　　彩乃
         gravity_group.update()  # gravityのGroupオブジェクトに含まれるインスタンスをすべて更新
         gravity_group.draw(screen)  # gravityのGruopに含まれるインスタンスをすべて描画
 
