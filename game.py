@@ -130,7 +130,13 @@ class Enemy(pg.sprite.Sprite):
         self.vx, self.vy = 0, +6
         self.bound = random.randint(50, HEIGHT//2)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
-        self.interval = random.randint(50, 300)  # 爆弾投下インターバル
+        self.interval = random.randint(50, 200)  # 爆弾投下インターバル
+# 停止後移動
+        for i in range (100) :
+            self.rl = -1 ** i  # 左右
+        self.ud = 2  # 振動幅
+        self.rl_speed = random.randint(1,3)  # 左右スピード
+        self.ud_off = 0  # 初期値
 
     def update(self):
         """
@@ -141,6 +147,17 @@ class Enemy(pg.sprite.Sprite):
         if self.rect.centery > self.bound:
             self.vy = 0
             self.state = "stop"
+
+        if self.state == "stop":
+            self.rect.x += self.rl * self.rl_speed
+            self.ud_off = self.ud * math.sin(pg.time.get_ticks() * 0.002)
+            self.rect.y += self.ud_off
+        # 跳ね返り 
+            if self.rect.left < 0 or self.rect.right > WIDTH:
+                self.rl *= -1
+
+            
+
         self.rect.move_ip(self.vx, self.vy)
 
 
@@ -252,7 +269,9 @@ class Explosion(pg.sprite.Sprite):
     """
     爆発に関するクラス
     """
-    def __init__(self, obj: "Bomb|Enemy", life: int):
+
+#scaleを設定し、こうかとんが攻撃を受けたときにだけ小さく表示する
+    def __init__(self, obj: "Bomb|Enemy", life: int , scale = 1.0):  
         """
         爆弾が爆発するエフェクトを生成する
         引数1 obj：爆発するBombまたは敵機インスタンス
@@ -260,7 +279,7 @@ class Explosion(pg.sprite.Sprite):
         """
         super().__init__()
         img = pg.image.load(f"fig/explosion.gif")
-        self.imgs = [img, pg.transform.flip(img, 1, 1)]
+        self.imgs = [pg.transform.scale(img, (int(img.get_width() * scale), int(img.get_height() * scale))),pg.transform.flip(img, 1, 1)]
         self.image = self.imgs[0]
         self.rect = self.image.get_rect(center=obj.rect.center)
         self.life = life
@@ -393,6 +412,13 @@ def main():
 
     tmr = 0
     clock = pg.time.Clock()
+
+    life = 10  # 残機10に設定
+    life_icon =  pg.transform.rotozoom(pg.image.load(f"fig/0.png"), 0, 0.7) 
+    pg.init
+    font_hp = pg.font.Font(None, 36) # HP
+    font_go = pg.font.Font(None, 100) # GameOver
+
     while True:
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():  # ボタンが押されて起こるfor文
@@ -410,7 +436,7 @@ def main():
                     gravity = Gravity(screen)  # Gravityクラスを呼び出す
                     gravity_group.add(gravity)  # インスタンスをGroupオブジェクトに追加
                     score.value -= 200  # 重力場呼び出すとき使ったスコア文を引く
-           
+            
             # 追加機能3
             if event.type == pg.KEYDOWN and event.key == pg.K_e and score.value >= 20:
                 Emp(emys, bombs, screen)
@@ -460,12 +486,27 @@ def main():
             score.value += 10  # 10点アップ
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
-        if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
-            bird.change_img(8, screen) # こうかとん悲しみエフェクト
-            score.update(screen)
-            pg.display.update()
-            time.sleep(2)
-            return
+#爆弾があたったらLifeを削り、少し爆発を起こす
+        for bomb in pg.sprite.spritecollide(bird, bombs, True): 
+                exps.add(Explosion(bomb,10,scale=0.7))
+                life -= 1
+                bird.change_img(8, screen)
+#Life切れの場合                
+                if life <= 0 :  
+                    score.update(screen)
+                    #GameOver表示
+                    go_text = font_go.render("Game Over", True, (0))
+                    go_rect = go_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+                    screen.blit(go_text , go_rect)
+                    pg.display.update()
+                    time.sleep(2)
+                    return  
+        #HP表示    
+        for i in range(life):
+            screen.blit(life_icon, (1050 - i * 40, 10))
+        hp_text = font_hp.render(f"HP×{i+1}", True, (255, 255, 255))  # テキスト描画
+        screen.blit(hp_text, (970- i*40, 30))
+
 
         bird.update(key_lst, screen)
         beams.update()
