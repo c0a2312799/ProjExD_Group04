@@ -151,13 +151,25 @@ class Boss():
     pass
 
 
-class Coin():
+class Coin(pg.sprite.Sprite):
     """
     コインの生成に関するクラス
     """
-    pass
-
-
+    def __init__(self):
+        super().__init__()
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/coin.png"), 0, 0.05) #コインの画像Surfaceを生成し大きさを調整
+        self.rect = self.image.get_rect() # 画像範囲を取得
+        r_x = random.randint(0,WIDTH) # x座標
+        r_y = random.randint(0,HEIGHT) # y座標
+        self.rect.center = (r_x, r_y) #コインの中心座標
+    
+    def update(self, screen: pg.Surface):
+        """
+        コインを描画する
+        """
+        screen.blit(self.image, self.rect)
+        
+    
 """ 攻撃に関するクラス群 - Beam, NeoBeam, Bomb, Explosion """
 
 class Beam(pg.sprite.Sprite):
@@ -388,6 +400,7 @@ def main():
     beams = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
+    coins = pg.sprite.Group()
     emp = pg.sprite.Group()    
     shield = pg.sprite.Group()
 
@@ -421,6 +434,7 @@ def main():
                 for bomb in bombs:
                     bomb.speed /= 2  # 動き鈍く
                     bomb.state = "inactive"  # 爆弾の状態を無効
+
             if event.type == pg.KEYDOWN and event.key == pg.K_a:
                 if len(shield) == 0 and score.value >= 50:
                     score.value -= 50
@@ -432,6 +446,10 @@ def main():
 
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
+
+        if tmr >= 500: # 500フレーム以上経過しているかつ
+            if tmr%500 == 0: #　500フレームに1回、コインを出現させる
+                coins.add(Coin())
 
         for emy in emys:
             if emy.state == "stop" and tmr%emy.interval == 0:
@@ -460,6 +478,10 @@ def main():
             score.value += 10  # 10点アップ
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
+        if pg.sprite.spritecollide(bird, coins, True):
+            score.value += 50 # スコアに50点追加
+            #combo.value += 50 # コンボにに50点追加
+
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
             score.update(screen)
@@ -474,6 +496,8 @@ def main():
         emys.draw(screen)
         bombs.update()
         bombs.draw(screen)
+        # coins.update(screen)
+        coins.draw(screen)
         exps.update()
         exps.draw(screen)
         shield.update()
