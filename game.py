@@ -4,6 +4,8 @@ import random
 import sys
 import time
 import pygame as pg
+import time
+
 
 
 WIDTH = 1100  # ゲームウィンドウの幅
@@ -36,13 +38,6 @@ def calc_orientation(org: pg.Rect, dst: pg.Rect) -> tuple[float, float]:
     x_diff, y_diff = dst.centerx-org.centerx, dst.centery-org.centery
     norm = math.sqrt(x_diff**2+y_diff**2)
     return x_diff/norm, y_diff/norm
-
-
-def time_controller():
-    """
-    時間経過に応じてゲーム全体をコントロールする関数
-    """
-    pass
 
 
 """ ゲーム内エンティティに関するクラス群 - Bird, Enemy, Boss, Coin """
@@ -373,6 +368,27 @@ class Combo:
     """
     pass
 
+class Times():
+    """
+    時間経過に応じてゲーム全体をコントロールする関数
+    """
+    def __init__(self):
+        self.timefont = pg.font.Font(None, 50)
+        self.timecolor = (0,0,255)
+        self.starttime = pg.time.get_ticks()
+    
+        
+    def update(self, screen: pg.Surface):
+        start_time = 0
+        time_ms = pg .time.get_ticks() - start_time # ゲームの開始からの経過時間をミリ秒単位で取得します。
+        time_byou = time_ms // 1000
+        time_min ,seconds = divmod(time_byou,60)
+        time_str = f"{time_min:02}:{seconds:02}"
+
+        self.timeimage = self.timefont.render(time_str, True, self.timecolor)
+        self.timerect = self.timeimage.get_rect()
+        self.timerect.topright = (WIDTH -980, 20)
+        screen.blit(self.timeimage, self.timerect)
 
 """ 以下、main関数 """
 
@@ -381,6 +397,7 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
+    timed = Times()
 
     bird = Bird(3, (900, 400))
     gravity_group = pg.sprite.Group()  # gravityのGruopオブジェクトの生成
@@ -474,6 +491,7 @@ def main():
         emys.draw(screen)
         bombs.update()
         bombs.draw(screen)
+        timed.update(screen)
         exps.update()
         exps.draw(screen)
         shield.update()
