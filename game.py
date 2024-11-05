@@ -4,8 +4,6 @@ import random
 import sys
 import time
 import pygame as pg
-
-
 WIDTH = 1100  # ゲームウィンドウの幅
 HEIGHT = 650  # ゲームウィンドウの高さ
 
@@ -38,13 +36,6 @@ def calc_orientation(org: pg.Rect, dst: pg.Rect) -> tuple[float, float]:
     return x_diff/norm, y_diff/norm
 
 
-def time_controller():
-    """
-    時間経過に応じてゲーム全体をコントロールする関数
-    """
-    pass
-
-
 """ ゲーム内エンティティに関するクラス群 - Bird, Enemy, Boss, Coin """
 
 class Bird(pg.sprite.Sprite):
@@ -57,7 +48,6 @@ class Bird(pg.sprite.Sprite):
         pg.K_LEFT: (-1, 0),
         pg.K_RIGHT: (+1, 0),
     }
-
     def __init__(self, num: int, xy: tuple[int, int]):
         """
         こうかとん画像Surfaceを生成する
@@ -131,7 +121,7 @@ class Enemy(pg.sprite.Sprite):
         self.bound = random.randint(50, HEIGHT//2)  # 停止位置
         self.state = "down"  # 降下状態or停止状態
         self.interval = random.randint(50, 300)  # 爆弾投下インターバル
-
+    
     def update(self):
         """
         敵機を速度ベクトルself.vyに基づき移動（降下）させる
@@ -180,7 +170,6 @@ class Beam(pg.sprite.Sprite):
         self.rect.centery = bird.rect.centery+bird.rect.height*self.vy
         self.rect.centerx = bird.rect.centerx+bird.rect.width*self.vx
         self.speed = 10
-
     def update(self):
         """
         ビームを速度ベクトルself.vx, self.vyに基づき移動させる
@@ -195,7 +184,6 @@ class NeoBeam():
     """
     分散したビームを放つ弾幕攻撃を生成するクラス
     """
-
     def __init__(self, bird: Bird, num: int|float):
         """
         弾幕用のBeamに関する設定
@@ -237,7 +225,7 @@ class Bomb(pg.sprite.Sprite):
         self.rect.centerx = emy.rect.centerx
         self.rect.centery = emy.rect.centery+emy.rect.height//2
         self.speed = 6
-
+    
     def update(self):
         """
         爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
@@ -246,7 +234,7 @@ class Bomb(pg.sprite.Sprite):
         self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
         if check_bound(self.rect) != (True, True):
             self.kill()
-
+    
 
 class Explosion(pg.sprite.Sprite):
     """
@@ -264,7 +252,6 @@ class Explosion(pg.sprite.Sprite):
         self.image = self.imgs[0]
         self.rect = self.image.get_rect(center=obj.rect.center)
         self.life = life
-
     def update(self):
         """
         爆発時間を1減算した爆発経過時間_lifeに応じて爆発画像を切り替えることで
@@ -322,7 +309,6 @@ class Gravity(pg.sprite.Sprite):
         pg.draw.rect(self.image, (0, 0, 0), pg.Rect(0, 0, WIDTH, HEIGHT))
         self.image.set_alpha(128)
         self.rect = self.image.get_rect()
-
     def update(self):
         """
         lifeを1減算し、0未満になったらkillする
@@ -361,7 +347,6 @@ class Score:
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         self.rect = self.image.get_rect()
         self.rect.center = 100, HEIGHT-50
-
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
         screen.blit(self.image, self.rect)
@@ -409,10 +394,23 @@ class Combo:
 def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
-    bg_img = pg.image.load(f"fig/pg_bg.jpg")
+    #背景画像のロード　　　　　　　　　　　　　　　　　　彩乃が書いた
+    bg_img1 = pg.image.load(f"fig/背景画像/bg1.jpg")
+    bg_img2 = pg.image.load(f"fig/背景画像/bg2.jpg")
+    bg_img3 = pg.image.load(f"fig/背景画像/bg3.jpg")
+    bg_img4 = pg.image.load(f"fig/背景画像/bg4.jpg")
+    bg_img5 = pg.image.load(f"fig/背景画像/bg5.jpg")
+    #背景画像の大きさの変更
+    bg_img1 = pg.transform.scale(bg_img1, (WIDTH, HEIGHT))
+    bg_img2 = pg.transform.scale(bg_img2, (WIDTH, HEIGHT))
+    bg_img3 = pg.transform.scale(bg_img3, (WIDTH, HEIGHT))
+    bg_img4 = pg.transform.scale(bg_img4, (WIDTH, HEIGHT))
+    bg_img5 = pg.transform.scale(bg_img5, (WIDTH, HEIGHT))
+    bg_img_list = [bg_img1, bg_img2, bg_img3, bg_img4, bg_img5]  # 背景画像のリストの作成
+    bg_image = random.choice(bg_img_list)  # 背景画像をランダムで選ぶ
+    
     score = Score()
     combo = Combo()  # コンボオブジェクト
-
     bird = Bird(3, (900, 400))
     gravity_group = pg.sprite.Group()  # gravityのGruopオブジェクトの生成
     bombs = pg.sprite.Group()
@@ -421,7 +419,6 @@ def main():
     emys = pg.sprite.Group()
     emp = pg.sprite.Group()    
     shield = pg.sprite.Group()
-
     tmr = 0
     clock = pg.time.Clock()
     while True:
@@ -457,31 +454,26 @@ def main():
                     combo.value -= 10
                     shield.add((Shield(bird, 400)))
 
-        screen.blit(bg_img, [0, 0])
+        screen.blit(bg_image, [0, 0])
         gravity_group.update()  # gravityのGroupオブジェクトに含まれるインスタンスをすべて更新
         gravity_group.draw(screen)  # gravityのGruopに含まれるインスタンスをすべて描画
-
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
-
         for emy in emys:
             if emy.state == "stop" and tmr%emy.interval == 0:
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
                 bombs.add(Bomb(emy, bird))
-
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
             score.value += 10  # 10点アップ
             if combo.inc_comb(time.time()):
                 combo.value += 1  # 1コンボ＋
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
-
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
             if combo.inc_comb(time.time()):
                 combo.value += 1  # 1コンボ＋
-
         for bomb in pg.sprite.groupcollide(bombs, shield, True, False).keys():
             exps.add(Explosion(bomb, 100))  # 爆発エフェクト
             score.value += 1  # 1点アップ
@@ -500,14 +492,12 @@ def main():
             if combo.inc_comb(time.time()):
                 combo.value += 1  # 1コンボ＋
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
-
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
             score.update(screen)
             pg.display.update()
             time.sleep(2)
             return
-
         bird.update(key_lst, screen)
         beams.update()
         beams.draw(screen)
@@ -526,8 +516,6 @@ def main():
         pg.display.update()
         tmr += 1
         clock.tick(50)
-
-
 if __name__ == "__main__":
     pg.init()
     main()
