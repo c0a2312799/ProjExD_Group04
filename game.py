@@ -377,7 +377,6 @@ class Times():
         self.timecolor = (0,0,255)
         self.starttime = pg.time.get_ticks()
     
-        
     def update(self, screen: pg.Surface):
         start_time = 0
         time_ms = pg .time.get_ticks() - start_time # ゲームの開始からの経過時間をミリ秒単位で取得します。
@@ -480,6 +479,7 @@ def main():
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
             bird.change_img(8, screen) # こうかとん悲しみエフェクト
             score.update(screen)
+            timed.update(screen)
             pg.display.update()
             time.sleep(2)
             return
