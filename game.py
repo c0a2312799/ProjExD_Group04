@@ -4,6 +4,8 @@ import random
 import sys
 import time
 import pygame as pg
+
+
 WIDTH = 1100  # ゲームウィンドウの幅
 HEIGHT = 650  # ゲームウィンドウの高さ
 
@@ -353,7 +355,7 @@ class Emp:
         time.sleep(0.05)
 
 
-""" 数値に関するクラス Score, Combo """
+""" 数値に関するクラス Score, Combo, Time """
 
 class Score:
     """
@@ -377,7 +379,6 @@ class Score:
 class Combo:
     """
     コンボに関するクラス
-    連続撃墜やコイン取得で１加算
     """
     def __init__(self):
         self.font = pg.font.Font(None, 50)
@@ -411,6 +412,28 @@ class Combo:
             del self.lst[:8]  # 末尾２つを残して削除する
 
 
+class Times():
+    """
+    時間経過に応じてゲーム全体をコントロールする関数
+    """
+    def __init__(self):
+        self.timefont = pg.font.Font(None, 50)
+        self.timecolor = (255,255,255)
+        self.starttime = pg.time.get_ticks()
+    
+    def update(self, screen: pg.Surface):
+        start_time = 0
+        time_ms = pg .time.get_ticks() - start_time # ゲームの開始からの経過時間をミリ秒単位で取得します。
+        time_byou = time_ms // 1000
+        time_min ,seconds = divmod(time_byou,60)
+        time_str = f"{time_min:02}:{seconds:02}"
+
+        self.timeimage = self.timefont.render(time_str, True, self.timecolor)
+        self.timerect = self.timeimage.get_rect()
+        self.timerect.topright = (WIDTH -980, 20)
+        screen.blit(self.timeimage, self.timerect)
+
+
 """ 以下、main関数 """
 
 def main():
@@ -432,7 +455,9 @@ def main():
     bg_image = random.choice(bg_img_list)  # 背景画像をランダムで選ぶ
     
     score = Score()
-    combo = Combo()  # コンボオブジェクト
+    combo = Combo()
+    timed = Times()
+
     bird = Bird(3, (900, 400))
     gravity_group = pg.sprite.Group()  # gravityのGruopオブジェクトの生成
     bombs = pg.sprite.Group()
@@ -556,6 +581,7 @@ def main():
         emys.draw(screen)
         bombs.update()
         bombs.draw(screen)
+        timed.update(screen)
         exps.update()
         exps.draw(screen)
         shield.update()
