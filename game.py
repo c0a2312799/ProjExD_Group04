@@ -385,6 +385,8 @@ class Score:
 
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"Score: {self.value}", 0, self.color)
+        if self.value < 0:
+            self.value = 0
         screen.blit(self.image, self.rect)
 
 
@@ -420,6 +422,8 @@ class Combo:
     def update(self, screen: pg.Surface):
         self.image = self.font.render(f"{self.value}combo", 0, self.color)
         screen.blit(self.image, self.rect)
+        if self.value < 0:
+            self.value = 0
         if len(self.lst) > 10:  # キル履歴が10件以上あったら
             del self.lst[:8]  # 末尾２つを残して削除する
 
@@ -451,7 +455,7 @@ class Times():
 def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
-    #背景画像のロード　　　　　　　　　　　　　　　　　　彩乃が書いた
+    #背景画像のロード
     bg_img1 = pg.image.load(f"fig/bg/bg1.jpg")
     bg_img2 = pg.image.load(f"fig/bg/bg2.jpg")
     bg_img3 = pg.image.load(f"fig/bg/bg3.jpg")
@@ -466,28 +470,36 @@ def main():
     bg_img_list = [bg_img1, bg_img2, bg_img3, bg_img4, bg_img5]  # 背景画像のリストの作成
     bg_image = random.choice(bg_img_list)  # 背景画像をランダムで選ぶ
     
+    # オブジェクト生成：スコア、コンボ、時間表示
     score = Score()
     combo = Combo()
     timed = Times()
 
+    # こうかとんオブジェクトの生成
     bird = Bird(3, (900, 400))
-    gravity_group = pg.sprite.Group()  # gravityのGruopオブジェクトの生成
-    bombs = pg.sprite.Group()
-    beams = pg.sprite.Group()
-    exps = pg.sprite.Group()
-    emys = pg.sprite.Group()
-    coins = pg.sprite.Group()
-    emp = pg.sprite.Group()    
-    shield = pg.sprite.Group()
+
+    # 各Groupオブジェクトの生成
+    bombs = pg.sprite.Group()  # 爆弾
+    beams = pg.sprite.Group()  # ビーム
+    exps = pg.sprite.Group()  # 爆発エフェクト
+    emys = pg.sprite.Group()  # 敵機
+    coins = pg.sprite.Group()  # コイン
+    gravity_group = pg.sprite.Group()  # 重力場
+    emp = pg.sprite.Group()  # パルス
+    shield = pg.sprite.Group()  # シールド
+    
+    # tick
     tmr = 0
     clock = pg.time.Clock()
 
+    # こうかとんのHP
     life = 10  # 残機10に設定
     life_icon =  pg.transform.rotozoom(pg.image.load(f"fig/0.png"), 0, 0.7) 
     pg.init
     font_hp = pg.font.Font(None, 36) # HP
     font_go = pg.font.Font(None, 100) # GameOver
 
+    # ゲーム
     while True:
         key_lst = pg.key.get_pressed()
         for event in pg.event.get():  # ボタンが押されて起こるfor文
@@ -500,16 +512,17 @@ def main():
                 else:
                     beams.add(Beam(bird))
             
+            # 重力場攻撃
             if key_lst[pg.K_RETURN]:  # RETURNを押したら
-                if combo.value >= 20:  # scoreが200以上なら
+                if combo.value >= 20:  # comboが20以上なら
                     gravity = Gravity(screen)  # Gravityクラスを呼び出す
                     gravity_group.add(gravity)  # インスタンスをGroupオブジェクトに追加
-                    score.value -= 20  # 重力場呼び出すとき使ったスコア文を引く
+                    combo.value -= 20  # 重力場呼び出すとき使ったスコア文を引く
             
-            # 追加機能3
-            if event.type == pg.KEYDOWN and event.key == pg.K_e and combo.value >= 5:
+            # パルス攻撃
+            if event.type == pg.KEYDOWN and event.key == pg.K_e and combo.value >= 20:  # comboが20以上なら
                 Emp(emys, bombs, screen)
-                combo.value -= 5
+                combo.value -= 20
                 for emy in emys:
                     emy.interval = float('inf')  # 敵機が爆弾を投下できなくする
                     emy.image = pg.transform.laplacian(emy.image)
@@ -517,8 +530,9 @@ def main():
                     bomb.speed /= 2  # 動き鈍く
                     bomb.state = "inactive"  # 爆弾の状態を無効
 
+            # シールド
             if event.type == pg.KEYDOWN and event.key == pg.K_a:
-                if len(shield) == 0 and combo.value >= 10:
+                if len(shield) == 0 and combo.value >= 10:  # comboが10以上なら
                     combo.value -= 10
                     shield.add((Shield(bird, 400)))
 
@@ -529,8 +543,8 @@ def main():
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
 
-        if tmr >= 500: # 500フレーム以上経過しているかつ
-            if tmr%500 == 0: #　500フレームに1回、コインを出現させる
+        if tmr >= 500:  # 500フレーム以上経過しているかつ
+            if tmr%500 == 0:  # 500フレームに1回、コインを出現させる
                 coins.add(Coin())
 
         for emy in emys:
@@ -558,7 +572,7 @@ def main():
                 combo.value += 1  # 1コンボ＋
         
         for bomb in pg.sprite.groupcollide(bombs, gravity_group, True, False).keys():
-            exps.add(Explosion(bomb, 50)) # 爆発エフェクト
+            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
             if combo.inc_comb(time.time()):
                 combo.value += 1  # 1コンボ＋
@@ -571,30 +585,30 @@ def main():
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
         if pg.sprite.spritecollide(bird, coins, True):
-            combo.value += 50 # コンボにに50点追加
+            combo.value += 10  # コンボに10点追加
 
-# 爆弾があたったらLifeを削り、少し爆発を起こす
+        # 爆弾があたったらLifeを削り、少し爆発を起こす
         for bomb in pg.sprite.spritecollide(bird, bombs, True): 
                 exps.add(Explosion(bomb,10,scale=0.7))
                 life -= 1
                 bird.change_img(8, screen)
-#Life切れの場合                
+                # Life切れの場合                
                 if life <= 0 :  
                     score.update(screen)
-                    #GameOver表示
+                    # GameOver表示
                     go_text = font_go.render("Game Over", True, (0))
                     go_rect = go_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
                     screen.blit(go_text , go_rect)
                     pg.display.update()
                     time.sleep(2)
                     return  
-        #HP表示    
+        # HP表示    
         for i in range(life):
             screen.blit(life_icon, (1050 - i * 40, 10))
         hp_text = font_hp.render(f"HP×{i+1}", True, (255, 255, 255))  # テキスト描画
         screen.blit(hp_text, (970- i*40, 30))
 
-
+        # 描画等の更新
         bird.update(key_lst, screen)
         beams.update()
         beams.draw(screen)
@@ -616,6 +630,8 @@ def main():
         pg.display.update()
         tmr += 1
         clock.tick(50)
+
+
 if __name__ == "__main__":
     pg.init()
     main()
