@@ -370,8 +370,38 @@ class Score:
 class Combo:
     """
     コンボに関するクラス
+    連続撃墜やコイン取得で１加算
     """
-    pass
+    def __init__(self):
+        self.font = pg.font.Font(None, 50)
+        self.color = (255, 215, 0)
+        self.value = 0
+        self.image = self.font.render(f"{self.value}combo", 0, self.color)
+        self.rect = self.image.get_rect()
+        self.rect.center = 100, HEIGHT-100
+        self.cnt = 0  # inc_combが呼び出されるたびに加算
+        self.lst = [] # 撃墜時刻を保存しておくリスト
+    
+    def inc_comb(self, attime:time)->bool:
+        """
+        コンボ加算の対象かどうかを判別する関数
+        引数：撃墜した時刻(時間型)
+        戻り値：bool値
+        """
+        comb_time = 0  # 撃墜時間計算用の変数を０で初期化
+        self.cnt += 1
+        self.lst.append(attime)  # 撃墜時刻をリストに追加
+        if self.cnt != 1:  # 初回呼び出しでなければ
+            comb_time = abs(self.lst[-2] - self.lst[-1])  # 前回の撃墜からの経過時間を計算
+        if comb_time < 2.0:  # 2秒以内のキルなら
+            return True
+        else: return False
+
+    def update(self, screen: pg.Surface):
+        self.image = self.font.render(f"{self.value}combo", 0, self.color)
+        screen.blit(self.image, self.rect)
+        if len(self.lst) > 10:  # キル履歴が10件以上あったら
+            del self.lst[:8]  # 末尾２つを残して削除する
 
 
 """ 以下、main関数 """
@@ -381,6 +411,7 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load(f"fig/pg_bg.jpg")
     score = Score()
+    combo = Combo()  # コンボオブジェクト
 
     bird = Bird(3, (900, 400))
     gravity_group = pg.sprite.Group()  # gravityのGruopオブジェクトの生成
@@ -406,15 +437,15 @@ def main():
                     beams.add(Beam(bird))
             
             if key_lst[pg.K_RETURN]:  # RETURNを押したら
-                if score.value >= 200:  # scoreが200以上なら
+                if combo.value >= 20:  # scoreが200以上なら
                     gravity = Gravity(screen)  # Gravityクラスを呼び出す
                     gravity_group.add(gravity)  # インスタンスをGroupオブジェクトに追加
-                    score.value -= 200  # 重力場呼び出すとき使ったスコア文を引く
+                    score.value -= 20  # 重力場呼び出すとき使ったスコア文を引く
            
             # 追加機能3
-            if event.type == pg.KEYDOWN and event.key == pg.K_e and score.value >= 20:
+            if event.type == pg.KEYDOWN and event.key == pg.K_e and combo.value >= 5:
                 Emp(emys, bombs, screen)
-                score.value -= 20
+                combo.value -= 5
                 for emy in emys:
                     emy.interval = float('inf')  # 敵機が爆弾を投下できなくする
                     emy.image = pg.transform.laplacian(emy.image)
@@ -422,8 +453,8 @@ def main():
                     bomb.speed /= 2  # 動き鈍く
                     bomb.state = "inactive"  # 爆弾の状態を無効
             if event.type == pg.KEYDOWN and event.key == pg.K_a:
-                if len(shield) == 0 and score.value >= 50:
-                    score.value -= 50
+                if len(shield) == 0 and combo.value >= 10:
+                    combo.value -= 10
                     shield.add((Shield(bird, 400)))
 
         screen.blit(bg_img, [0, 0])
@@ -441,23 +472,33 @@ def main():
         for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
             score.value += 10  # 10点アップ
+            if combo.inc_comb(time.time()):
+                combo.value += 1  # 1コンボ＋
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
         for bomb in pg.sprite.groupcollide(bombs, beams, True, True).keys():
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
+            if combo.inc_comb(time.time()):
+                combo.value += 1  # 1コンボ＋
 
         for bomb in pg.sprite.groupcollide(bombs, shield, True, False).keys():
             exps.add(Explosion(bomb, 100))  # 爆発エフェクト
             score.value += 1  # 1点アップ
+            if combo.inc_comb(time.time()):
+                combo.value += 1  # 1コンボ＋
         
         for bomb in pg.sprite.groupcollide(bombs, gravity_group, True, False).keys():
             exps.add(Explosion(bomb, 50)) # 爆発エフェクト
             score.value += 1  # 1点アップ
+            if combo.inc_comb(time.time()):
+                combo.value += 1  # 1コンボ＋
             
         for emy in pg.sprite.groupcollide(emys, gravity_group, True, False).keys():
             exps.add(Explosion(emy, 100))  # 爆発エフェクト
             score.value += 10  # 10点アップ
+            if combo.inc_comb(time.time()):
+                combo.value += 1  # 1コンボ＋
             bird.change_img(6, screen)  # こうかとん喜びエフェクト
 
         if len(pg.sprite.spritecollide(bird, bombs, True)) != 0:
@@ -479,6 +520,7 @@ def main():
         shield.update()
         shield.draw(screen)
         score.update(screen)
+        combo.update(screen)
         emp.update()
         emp.draw(screen)
         pg.display.update()
