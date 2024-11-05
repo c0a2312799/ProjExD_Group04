@@ -395,11 +395,11 @@ def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     #背景画像のロード　　　　　　　　　　　　　　　　　　彩乃が書いた
-    bg_img1 = pg.image.load(f"fig/背景画像/bg1.jpg")
-    bg_img2 = pg.image.load(f"fig/背景画像/bg2.jpg")
-    bg_img3 = pg.image.load(f"fig/背景画像/bg3.jpg")
-    bg_img4 = pg.image.load(f"fig/背景画像/bg4.jpg")
-    bg_img5 = pg.image.load(f"fig/背景画像/bg5.jpg")
+    bg_img1 = pg.image.load(f"fig/bg/bg1.jpg")
+    bg_img2 = pg.image.load(f"fig/bg/bg2.jpg")
+    bg_img3 = pg.image.load(f"fig/bg/bg3.jpg")
+    bg_img4 = pg.image.load(f"fig/bg/bg4.jpg")
+    bg_img5 = pg.image.load(f"fig/bg/bg5.jpg")
     #背景画像の大きさの変更
     bg_img1 = pg.transform.scale(bg_img1, (WIDTH, HEIGHT))
     bg_img2 = pg.transform.scale(bg_img2, (WIDTH, HEIGHT))
