@@ -156,7 +156,36 @@ class Boss():
     """
     ボスキャラに関するクラス
     """
-    pass
+    def __init__(self):
+        super().__init__()
+        self.image = pg.transform.rotozoom(pg.image.load(f"fig/alien1.png"), 0, 3.0)
+        self.rect = self.image.get_rect()  # 座標取得
+        self.rect.center = WIDTH//2, 0
+        self.vx, self.vy = 0, +1  # 加速度
+        self.bound = HEIGHT//3
+        self.state = "none"  # 最初は描画しない
+    
+    def update(self, screen:pg.Surface):
+        """
+        ボスを速度ベクトルself.vx,vyに基づき移動させる
+        登場時、指定位置まで下降したら一旦停止
+        停止後、左右端まで移動したら，self.vxの正負を逆転する
+        引数 screen：画面Surface
+        """
+        if self.state == "none":  # noneステータスで呼び出されたら
+            self.state = "down"  # 下降を始めて登場させる
+        if self.state == "down":  # 下降中
+            if self.rect.centery > self.bound:  # 指定位置に達したら
+                self.vy = 0  # 移動をやめて
+                self.state = "stop"  # いったん停止モードに
+        if self.state == "stop":  # 停止中なら
+            self.vx = 3  # x座標方向に加速度を与える
+            self.state = "move"  # ステータスを変更
+        if self.state == "move":  # move中なら
+            if (self.rect.centerx == 0) or (self.rect.centerx == WIDTH):
+                self.vx *= -1  # 画面端に達したとき反転
+        self.rect.move_ip(self.vx, self.vy)
+        screen.blit(self.image, self.rect)
 
 
 class Coin(pg.sprite.Sprite):
@@ -487,6 +516,8 @@ def main():
     gravity_group = pg.sprite.Group()  # 重力場
     emp = pg.sprite.Group()  # パルス
     shield = pg.sprite.Group()  # シールド
+    # boss = pg.sprite.Group()  # ボス
+    boss_attack = 10  # ボスへの攻撃回数
     
     # tick
     tmr = 0
@@ -542,6 +573,27 @@ def main():
         
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
+        
+        if tmr == 2000:  # 1000フレーム後に、ボスを登場させる
+            boss = Boss()
+        
+        if tmr > 2100:  # 1010フレーム経過後に衝突判定を行う
+            boss.update(screen)
+            for beam in pg.sprite.spritecollide(boss, beams, True):
+                boss_attack -= 1  # 攻撃カウントを加算
+                exps.add(Explosion(beam, 100))  # 爆発エフェクト
+                if combo.inc_comb(time.time()):
+                    combo.value += 1  # 1コンボ＋
+            if boss_attack <= 0:  # ボスに10回攻撃したら
+                boss = None
+                score.update(screen)
+                # GameClear表示
+                go_text = font_go.render("Game Clear", True, (0))
+                go_rect = go_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+                screen.blit(go_text , go_rect)
+                pg.display.update()
+                time.sleep(3)
+                return
 
         if tmr >= 500:  # 500フレーム以上経過しているかつ
             if tmr%500 == 0:  # 500フレームに1回、コインを出現させる
