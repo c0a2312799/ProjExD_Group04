@@ -482,7 +482,7 @@ class Times():
 """ 以下、main関数 """
 
 def main():
-    pg.display.set_caption("真！こうかとん無双")
+    pg.display.set_caption("こうかとん お空のぽよぽよシューティング")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
     #背景画像のロード
     bg_img1 = pg.image.load(f"fig/bg/bg1.jpg")
