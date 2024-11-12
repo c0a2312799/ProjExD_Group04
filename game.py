@@ -182,7 +182,7 @@ class Boss():
             self.vx = 3  # x座標方向に加速度を与える
             self.state = "move"  # ステータスを変更
         if self.state == "move":  # move中なら
-            if (self.rect.centerx == 0) or (self.rect.centerx == WIDTH):
+            if check_bound(self.rect) != (True, True):
                 self.vx *= -1  # 画面端に達したとき反転
         self.rect.move_ip(self.vx, self.vy)
         screen.blit(self.image, self.rect)
@@ -301,7 +301,7 @@ class Explosion(pg.sprite.Sprite):
     爆発に関するクラス
     """
 
-#scaleを設定し、こうかとんが攻撃を受けたときにだけ小さく表示する
+    #scaleを設定し、こうかとんが攻撃を受けたときにだけ小さく表示する
     def __init__(self, obj: "Bomb|Enemy", life: int , scale = 1.0):  
         """
         爆弾が爆発するエフェクトを生成する
@@ -574,10 +574,10 @@ def main():
         if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
             emys.add(Enemy())
         
-        if tmr == 2000:  # 1000フレーム後に、ボスを登場させる
+        if tmr == 3000:  # 3000フレーム後に、ボスを登場させる
             boss = Boss()
         
-        if tmr > 2100:  # 1010フレーム経過後に衝突判定を行う
+        if tmr > 3500:  # 3500フレーム経過後に衝突判定を行う
             boss.update(screen)
             for beam in pg.sprite.spritecollide(boss, beams, True):
                 boss_attack -= 1  # 攻撃カウントを加算
